@@ -29,6 +29,13 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(''); // сбрасываем ошибку перед отправкой
+
+        const isFormValid = Object.values(form).every(value => value.trim() !== '');
+        if (!isFormValid) {
+            setError('Не все обязательные поля заполнены');
+            return;
+        }
+
         try {
             // 1. Создаем пользователя
             await createUser(form);
@@ -44,7 +51,18 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
             }
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
-                setError(error.response?.data?.message || 'Ошибка при регистрации');
+                const rawMessage = error.response?.data;
+                const message = typeof rawMessage === 'string'
+                    ? rawMessage
+                    : rawMessage?.message || '';
+
+                if (message.includes('already exists') || message.includes('unique constraint') || message.includes('уже существует')) {
+                    setError(`Пользователь с логином ${form.login} уже существует`);
+                } else if (message) {
+                    setError(message);
+                } else {
+                    setError('Ошибка при регистрации');
+                }
             } else if (error instanceof Error) {
                 setError(error.message);
             } else {
@@ -53,8 +71,22 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
         }
     };
 
+    const isFieldEmpty = (field: string) => form[field as keyof CreateUserDto].trim() === '' && error !== '';
+
     return (
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 2 }}>
+        <Box
+            component="form"
+            onSubmit={handleSubmit}
+            noValidate
+            sx={{
+                mt: 2,
+                width: '100%',
+                maxWidth: 450,
+                mx: 'auto',
+                px: 2,
+                boxSizing: 'border-box',
+            }}
+        >
             <Stack spacing={2}>
                 <Typography variant="h5" align="center">
                     Регистрация
@@ -67,6 +99,7 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
                     onChange={handleChange}
                     required
                     fullWidth
+                    error={isFieldEmpty('name')}
                 />
                 <TextField
                     label="Фамилия"
@@ -75,6 +108,7 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
                     onChange={handleChange}
                     required
                     fullWidth
+                    error={isFieldEmpty('surname')}
                 />
                 <TextField
                     label="Логин"
@@ -83,6 +117,7 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
                     onChange={handleChange}
                     required
                     fullWidth
+                    error={isFieldEmpty('login')}
                 />
                 <TextField
                     label="Пароль"
@@ -92,9 +127,25 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
                     onChange={handleChange}
                     required
                     fullWidth
+                    error={isFieldEmpty('password')}
                 />
 
-                {error && <Alert severity="error">{error}</Alert>}
+                {/* Резервируем место под ошибку */}
+                <Box sx={{ minHeight: 52, overflow: 'hidden' }}>
+                    {error && (
+                        <Alert
+                            severity="error"
+                            sx={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                            }}
+                            title={error}
+                        >
+                            {error}
+                        </Alert>
+                    )}
+                </Box>
 
                 <Button type="submit" variant="contained" color="primary" fullWidth>
                     Зарегистрироваться
@@ -102,5 +153,6 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
             </Stack>
         </Box>
     );
+
 }
 export default RegisterForm;
