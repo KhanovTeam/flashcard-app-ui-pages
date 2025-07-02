@@ -1,55 +1,115 @@
 import { useState } from 'react';
 import { login } from '../api/auth';
-import {useAuth} from "../hooks/UseAuth.ts";
-import { useNavigate, Link } from 'react-router-dom';
-import * as styles from './LoginPage.module.css.ts';
+import { useAuth } from '../hooks/UseAuth';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+
+import {
+    Box,
+    Button,
+    Paper,
+    TextField,
+    Typography,
+    Link,
+    Stack
+} from '@mui/material';
 
 export const LoginPage = () => {
     const [form, setForm] = useState({ login: '', password: '' });
+    const [fieldErrors, setFieldErrors] = useState({ login: false, password: false });
     const { login: saveToken } = useAuth();
     const navigate = useNavigate();
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
+        const hasLogin = form.login.trim() !== '';
+        const hasPassword = form.password.trim() !== '';
+
+        // Отметить поля с ошибками
+        setFieldErrors({
+            login: !hasLogin,
+            password: !hasPassword
+        });
+
+        if (!hasLogin || !hasPassword) {
+            setError('Обязательные поля не заполнены');
+            return;
+        }
+
         try {
             const res = await login(form.login, form.password);
             if (res.token) {
                 saveToken(res.token);
                 navigate('/');
             } else {
-                alert(res.errorMessage || 'Ошибка входа');
+                setError(res.errorMessage || 'Ошибка входа');
             }
         } catch {
-            alert('Неверный логин или пароль');
+            setError('Неверный логин или пароль');
         }
     };
 
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
+
+        // Убираем ошибку при вводе
+        setFieldErrors((prev) => ({ ...prev, [name]: false }));
+    };
+
     return (
-        <div className={styles.container}>
-            <form onSubmit={handleSubmit} className={styles.form}>
-                <input
-                    value={form.login}
-                    onChange={(e) => setForm({ ...form, login: e.target.value })}
-                    placeholder="Login"
-                    className={styles.input}
-                />
-                <input
-                    type="password"
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    placeholder="Password"
-                    className={styles.input}
-                />
-                <button type="submit" className={styles.button}>
-                    Войти
-                </button>
-                <p className={styles.registerText}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+            <Paper elevation={3} sx={{ p: 4, width: 360 }}>
+                <Typography variant="h5" align="center" gutterBottom>
+                    Вход
+                </Typography>
+
+                <form onSubmit={handleSubmit}>
+                    <Stack spacing={2}>
+                        <TextField
+                            name="login"
+                            label="Логин"
+                            value={form.login}
+                            onChange={handleChange}
+                            fullWidth
+                            required
+                            error={fieldErrors.login}
+                            helperText={fieldErrors.login ? 'Введите логин' : ''}
+                        />
+                        <TextField
+                            name="password"
+                            label="Пароль"
+                            type="password"
+                            value={form.password}
+                            onChange={handleChange}
+                            fullWidth
+                            required
+                            error={fieldErrors.password}
+                            helperText={fieldErrors.password ? 'Введите пароль' : ''}
+                        />
+                        <Typography
+                            color="error"
+                            sx={{
+                                minHeight: '20px',
+                                visibility: error ? 'visible' : 'hidden'
+                            }}
+                        >
+                            {error || 'placeholder'}
+                        </Typography>
+                        <Button type="submit" variant="contained" fullWidth>
+                            Войти
+                        </Button>
+                    </Stack>
+                </form>
+
+                <Typography variant="body2" align="center" mt={2}>
                     Нет аккаунта?{' '}
-                    <Link to="/register" className={styles.registerLink}>
+                    <Link component={RouterLink} to="/register">
                         Зарегистрироваться
                     </Link>
-                </p>
-            </form>
-        </div>
+                </Typography>
+            </Paper>
+        </Box>
     );
 };
