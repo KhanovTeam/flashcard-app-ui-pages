@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-const API_URL = 'http://localhost:8080/api/auth';
+import { API_BASE_URL } from './config';
 
 export interface AuthResponse {
     token: string | null;
@@ -9,7 +8,7 @@ export interface AuthResponse {
 
 export const login = async (login: string, password: string): Promise<AuthResponse> => {
     try {
-        const response = await axios.post<string>(`${API_URL}/login`, { login, password }, {
+        const response = await axios.post<string>(`${API_BASE_URL}/auth/login`, { login, password }, {
             responseType: 'text',
         });
         return { token: response.data, errorMessage: null };
