@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { fetchFlashcardSetById, flashcardSet } from '../api/flashcardSet.ts'; // Функция для загрузки по id
 import { useAuth } from '../hooks/UseAuth.ts';
 
-export const FlashcardSetPage = () => {
+export const FlashcardSet = () => {
     const { id } = useParams<{ id: string }>();
     const { token } = useAuth();
     const [setData, setSetData] = useState<flashcardSet | null>(null);

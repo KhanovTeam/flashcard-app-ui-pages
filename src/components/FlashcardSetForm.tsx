@@ -10,7 +10,7 @@ type Card = {
     definition: string;
 };
 
-const AddFlashcardSet = () => {
+const FlashcardSetForm = () => {
     const { token } = useAuth();
     const navigate = useNavigate();
 
@@ -131,4 +131,4 @@ const AddFlashcardSet = () => {
     );
 };
 
-export default AddFlashcardSet;
+export default FlashcardSetForm;

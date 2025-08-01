@@ -2,16 +2,7 @@ import { useState } from 'react';
 import { login } from '../api/auth';
 import { useAuth } from '../hooks/UseAuth';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-
-import {
-    Box,
-    Button,
-    Paper,
-    TextField,
-    Typography,
-    Link,
-    Stack
-} from '@mui/material';
+import {Box, Button, Paper, TextField, Typography, Link, Stack} from '@mui/material';
 
 export const LoginPage = () => {
     const [form, setForm] = useState({ login: '', password: '' });
