@@ -1,26 +1,37 @@
-import { useState } from 'react';
-import { login } from '../api/auth';
-import { useAuth } from '../hooks/UseAuth';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import {useState} from 'react';
+import {login as loginRequest} from '../api/auth';
+import {getCurrentUser} from '../api/user';
+import {useAuth} from '../hooks/UseAuth';
+import {useNavigate, Link as RouterLink} from 'react-router-dom';
 import {Box, Button, Paper, TextField, Typography, Link, Stack} from '@mui/material';
 
+/**
+ * Страница входа пользователя.
+ *
+ * Позволяет ввести логин и пароль, пройти валидацию,
+ * выполнить запрос на авторизацию и получить текущего пользователя.
+ * После успешного входа перенаправляет на главную страницу.
+ */
 export const LoginPage = () => {
-    const [form, setForm] = useState({ login: '', password: '' });
-    const [fieldErrors, setFieldErrors] = useState({ login: false, password: false });
-    const { login: saveToken } = useAuth();
+    const [form, setForm] = useState({login: '', password: ''});
+    const [fieldErrors, setFieldErrors] = useState({login: false, password: false});
+    const {login: saveAuth} = useAuth();
     const navigate = useNavigate();
     const [error, setError] = useState('');
 
+    /**
+     * Обрабатывает отправку формы входа.
+     *
+     * Выполняет валидацию полей и отправляет запросы на авторизацию и получение текущего пользователя.
+     */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         const hasLogin = form.login.trim() !== '';
         const hasPassword = form.password.trim() !== '';
 
-        // Отметить поля с ошибками
         setFieldErrors({
-            login: !hasLogin,
-            password: !hasPassword
+            login: !hasLogin, password: !hasPassword,
         });
 
         if (!hasLogin || !hasPassword) {
@@ -29,10 +40,17 @@ export const LoginPage = () => {
         }
 
         try {
-            const res = await login(form.login, form.password);
+            const res = await loginRequest(form.login, form.password);
+
             if (res.token) {
-                saveToken(res.token);
-                navigate('/');
+                try {
+                    const user = await getCurrentUser(res.token);
+                    saveAuth(res.token, user);
+                    navigate('/');
+                } catch (userError) {
+                    console.error('Ошибка получения пользователя:', userError);
+                    setError('Ошибка загрузки пользователя');
+                }
             } else {
                 setError(res.errorMessage || 'Ошибка входа');
             }
@@ -41,17 +59,20 @@ export const LoginPage = () => {
         }
     };
 
+    /**
+     * Обрабатывает изменение полей ввода.
+     *
+     * @param e Событие изменения input-поля
+     */
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
-
-        // Убираем ошибку при вводе
-        setFieldErrors((prev) => ({ ...prev, [name]: false }));
+        const {name, value} = e.target;
+        setForm((prev) => ({...prev, [name]: value}));
+        setFieldErrors((prev) => ({...prev, [name]: false}));
     };
 
     return (
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-            <Paper elevation={3} sx={{ p: 4, width: 360 }}>
+            <Paper elevation={3} sx={{p: 4, width: 360}}>
                 <Typography variant="h5" align="center" gutterBottom>
                     Вход
                 </Typography>

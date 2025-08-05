@@ -1,4 +1,4 @@
-import { SxProps, Theme } from '@mui/material/styles';
+import {SxProps, Theme} from '@mui/material/styles';
 
 export const drawerWidth = 237;
 export const collapsedWidth = 64;

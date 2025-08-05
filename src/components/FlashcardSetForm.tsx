@@ -1,47 +1,89 @@
-import { useState } from 'react';
-import { useAuth } from '../hooks/UseAuth.ts';
-import { useNavigate } from 'react-router-dom';
-import {Box, Button, Container, TextField, Typography, IconButton,} from '@mui/material';
+import {useState, useEffect} from 'react';
+import {useAuth} from '../hooks/UseAuth';
+import {useNavigate} from 'react-router-dom';
+import {Box, Button, Container, TextField, Typography, IconButton} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { createFlashcardSet } from '../api/flashcardSet.ts';
+import {createFlashcardSet} from '../api/flashcardSet';
+import {getCurrentUser} from '../api/user';
+import type {Card} from '../types/flashcardSetTypes';
 
-type Card = {
-    term: string;
-    definition: string;
-};
 
-const FlashcardSetForm = () => {
-    const { token } = useAuth();
+/**
+ * Компонент формы для создания нового набора карточек.
+ *
+ * Позволяет ввести название, описание и добавить/удалить карточки.
+ * Загружает текущего пользователя для присвоения набора.
+ * Выполняет валидацию и отправляет данные на сервер.
+ *
+ * @returns JSX элемент с формой создания набора карточек.
+ */
+export const FlashcardSetForm = () => {
+    const {token} = useAuth();
     const navigate = useNavigate();
 
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [cards, setCards] = useState<Card[]>([
-        { term: '', definition: '' },
-        { term: '', definition: '' },
-        { term: '', definition: '' },
-        { term: '', definition: '' },
+        {term: '', definition: ''},
+        {term: '', definition: ''},
+        {term: '', definition: ''},
+        {term: '', definition: ''},
     ]);
+    const [userId, setUserId] = useState<number | null>(null);
 
+    useEffect(() => {
+        const loadUser = async () => {
+            if (!token) return;
+            try {
+                const user = await getCurrentUser(token);
+                setUserId(user.id);
+            } catch (error) {
+                alert('Ошибка при получении пользователя');
+                console.error(error);
+            }
+        };
+        loadUser();
+    }, [token]);
+
+    /**
+     * Обновляет данные конкретной карточки.
+     *
+     * @param index Индекс карточки в списке.
+     * @param field Поле карточки для обновления ('term' или 'definition').
+     * @param value Новое значение для поля.
+     */
     const handleCardChange = (index: number, field: keyof Card, value: string) => {
         const newCards = [...cards];
         newCards[index][field] = value;
         setCards(newCards);
     };
 
+    /** Добавляет пустую карточку в список */
     const addCard = () => {
-        setCards([...cards, { term: '', definition: '' }]);
+        setCards([...cards, {term: '', definition: ''}]);
     };
 
+    /**
+     * Удаляет карточку по индексу.
+     *
+     * @param index Индекс карточки, которую нужно удалить.
+     */
     const deleteCard = (index: number) => {
         setCards(cards.filter((_, i) => i !== index));
     };
 
+    /**
+     * Обрабатывает отправку формы создания набора.
+     *
+     * Выполняет валидацию и вызывает API для создания набора.
+     *
+     * @param e Событие отправки формы.
+     */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!token) {
-            alert('Ошибка: не найден токен');
+        if (!token || userId === null) {
+            alert('Ошибка: пользователь не найден');
             return;
         }
 
@@ -54,8 +96,8 @@ const FlashcardSetForm = () => {
             alert('Все карточки должны содержать термин и определение');
             return;
         }
-
-        const payload = {name, description, cards, userId: 1, // не актуальный userId
+        const payload = {
+            name, description, cards, userId,
         };
 
         try {
@@ -114,12 +156,12 @@ const FlashcardSetForm = () => {
                             required
                         />
                         <IconButton onClick={() => deleteCard(i)} color="error">
-                            <DeleteIcon />
+                            <DeleteIcon/>
                         </IconButton>
                     </Box>
                 ))}
 
-                <Button onClick={addCard} variant="outlined" sx={{ mt: 1, mb: 2 }}>
+                <Button onClick={addCard} variant="outlined" sx={{mt: 1, mb: 2}}>
                     Добавить карточку
                 </Button>
 
@@ -130,5 +172,3 @@ const FlashcardSetForm = () => {
         </Container>
     );
 };
-
-export default FlashcardSetForm;

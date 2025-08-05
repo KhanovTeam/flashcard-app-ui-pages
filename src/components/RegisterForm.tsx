@@ -1,16 +1,29 @@
 import {useState} from 'react';
-import {createUser} from '../api/user'; // проверь, что путь правильный
-import {login} from '../api/auth'; // импорт функции логина
-import type {CreateUserDto} from '../types/User';
-import {useAuth} from "../hooks/UseAuth.ts";
+import {createUser, getCurrentUser} from '../api/user';
+import {login} from '../api/auth';
+import type {CreateUserDto} from '../types/UserTypes';
+import {useAuth} from '../hooks/UseAuth';
 import axios from 'axios';
 import {Box, Button, TextField, Typography, Alert, Stack} from '@mui/material';
 
+/**
+ * Свойства формы регистрации.
+ *
+ * @property onSuccess Функция, вызываемая при успешной регистрации и входе в систему.
+ */
 interface RegisterFormProps {
-    onSuccess?: () => void; // например, переход на главную страницу
+    onSuccess?: () => void;
 }
 
-const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
+/**
+ * Компонент формы регистрации нового пользователя.
+ *
+ * Выполняет создание пользователя, авторизацию, сохранение токена и информации о пользователе.
+ * Обрабатывает ошибки регистрации и входа.
+ *
+ * @param onSuccess Функция, вызываемая при успешной регистрации и авторизации.
+ */
+export const RegisterForm = ({onSuccess}: RegisterFormProps) => {
     const [form, setForm] = useState<CreateUserDto>({
         name: '',
         surname: '',
@@ -19,7 +32,7 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
     });
 
     const [error, setError] = useState('');
-    const {login: saveToken} = useAuth();
+    const {login: saveAuth} = useAuth(); // сохраняем и токен, и пользователя
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const {name, value} = e.target;
@@ -28,7 +41,7 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(''); // сбрасываем ошибку перед отправкой
+        setError('');
 
         const isFormValid = Object.values(form).every(value => value.trim() !== '');
         if (!isFormValid) {
@@ -37,15 +50,13 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
         }
 
         try {
-            // 1. Создаем пользователя
             await createUser(form);
-
-            // 2. Логинимся с тем же логином и паролем
             const res = await login(form.login, form.password);
 
             if (res.token) {
-                saveToken(res.token);  // сохраняем токен в контекст и localStorage
-                onSuccess?.();         // вызываем callback (например, переход)
+                const user = await getCurrentUser(res.token);
+                saveAuth(res.token, user);
+                onSuccess?.();
             } else {
                 setError(res.errorMessage || 'Ошибка при входе после регистрации');
             }
@@ -56,7 +67,11 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
                     ? rawMessage
                     : rawMessage?.message || '';
 
-                if (message.includes('already exists') || message.includes('unique constraint') || message.includes('уже существует')) {
+                if (
+                    message.includes('already exists') ||
+                    message.includes('unique constraint') ||
+                    message.includes('уже существует')
+                ) {
                     setError(`Пользователь с логином ${form.login} уже существует`);
                 } else if (message) {
                     setError(message);
@@ -71,7 +86,8 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
         }
     };
 
-    const isFieldEmpty = (field: string) => form[field as keyof CreateUserDto].trim() === '' && error !== '';
+    const isFieldEmpty = (field: string) =>
+        form[field as keyof CreateUserDto].trim() === '' && error !== '';
 
     return (
         <Box
@@ -130,20 +146,10 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
                     error={isFieldEmpty('password')}
                 />
 
-                {/* Резервируем место под ошибку */}
-                <Box sx={{ minHeight: 52, overflow: 'hidden' }}>
+                {/* Ошибка */}
+                <Box sx={{minHeight: 52}}>
                     {error && (
-                        <Alert
-                            severity="error"
-                            sx={{
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                            }}
-                            title={error}
-                        >
-                            {error}
-                        </Alert>
+                        <Alert severity="error">{error}</Alert>
                     )}
                 </Box>
 
@@ -153,6 +159,4 @@ const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
             </Stack>
         </Box>
     );
-
-}
-export default RegisterForm;
+};

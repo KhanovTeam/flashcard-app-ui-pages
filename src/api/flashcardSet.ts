@@ -1,23 +1,17 @@
-import { API_BASE_URL } from './config';
+import {API_BASE_URL} from '../Constants/BaseURL';
+import type {flashcardSet, NewFlashcardSet, LastSeenFlashcardSetDto} from '../types/flashcardSetTypes';
+import {authHeader} from '../Constants/AuthHeader';
 
-export type flashcardSet = {
-    id: number;
-    name: string;
-};
-
-export type NewFlashcardSet = {
-    name: string;
-    description: string;
-    cards: { term: string; definition: string }[];
-    userId: number;
-};
-
-// Получить список всех наборов
-export const fetchflashcardSet = async (token: string): Promise<flashcardSet[]> => {
+/**
+ * Получить все наборы карточек.
+ *
+ * @param token JWT-токен пользователя для авторизации.
+ * @returns Массив объектов {@link flashcardSet}.
+ * @throws Ошибка при неуспешном HTTP-ответе.
+ */
+export const fetchFlashcardSets = async (token: string): Promise<flashcardSet[]> => {
     const res = await fetch(`${API_BASE_URL}/flashcardSet`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+        headers: authHeader(token),
     });
     if (!res.ok) {
         throw new Error(`Ошибка: ${res.status}`);
@@ -25,12 +19,17 @@ export const fetchflashcardSet = async (token: string): Promise<flashcardSet[]> 
     return res.json();
 };
 
-// Получить набор по ID
+/**
+ * Получить конкретный набор карточек по его ID.
+ *
+ * @param token JWT-токен пользователя для авторизации.
+ * @param id Идентификатор набора карточек.
+ * @returns Объект {@link flashcardSet} с заданным ID.
+ * @throws Ошибка при неуспешном HTTP-ответе.
+ */
 export const fetchFlashcardSetById = async (token: string, id: number): Promise<flashcardSet> => {
     const res = await fetch(`${API_BASE_URL}/flashcardSet/${id}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+        headers: authHeader(token),
     });
     if (!res.ok) {
         throw new Error(`Ошибка: ${res.status}`);
@@ -38,7 +37,14 @@ export const fetchFlashcardSetById = async (token: string, id: number): Promise<
     return res.json();
 };
 
-// Создать новый набор
+/**
+ * Создать новый набор карточек.
+ *
+ * @param token JWT-токен пользователя для авторизации.
+ * @param payload Объект {@link NewFlashcardSet} с данными для создания набора.
+ * @returns Созданный объект {@link flashcardSet}.
+ * @throws Ошибка с текстом ответа сервера при неуспешном HTTP-ответе.
+ */
 export const createFlashcardSet = async (
     token: string,
     payload: NewFlashcardSet
@@ -47,14 +53,29 @@ export const createFlashcardSet = async (
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            ...authHeader(token),
         },
         body: JSON.stringify(payload),
     });
-
     if (!res.ok) {
-        throw new Error(`Ошибка сервера: ${res.statusText}`);
+        const text = await res.text();
+        throw new Error(`Ошибка сервера: ${text}`);
     }
-
     return res.json();
+};
+
+/**
+ * Получить недавно просмотренные наборы карточек пользователя.
+ *
+ * @param token JWT-токен пользователя для авторизации.
+ * @returns Массив объектов {@link LastSeenFlashcardSetDto}.
+ * При ошибке возвращается пустой массив.
+ */
+export const fetchLastSeenFlashcardSets = async (
+    token: string
+): Promise<LastSeenFlashcardSetDto[]> => {
+    const res = await fetch(`${API_BASE_URL}/flashcardSet/LastSeenSets`, {
+        headers: authHeader(token),
+    });
+    return res.ok ? res.json() : [];
 };
