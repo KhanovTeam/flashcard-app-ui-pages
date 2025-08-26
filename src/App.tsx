@@ -21,6 +21,7 @@ function App() {
                         <Route path="/library" element={<PrivateRoute><Library/></PrivateRoute>}/>
                         <Route path="/add-flashcard-set" element={<PrivateRoute><FlashcardSetForm/></PrivateRoute>}/>
                         <Route path="/flashcard-set/:id" element={<PrivateRoute><FlashcardSet/></PrivateRoute>}/>
+                        <Route path="/flashcard-set/:id/edit" element={<PrivateRoute><FlashcardSetForm/></PrivateRoute>} />
                     </Route>
                 </Routes>
             </BrowserRouter>

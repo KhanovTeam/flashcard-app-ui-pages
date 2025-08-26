@@ -1,4 +1,4 @@
-import {useParams} from 'react-router-dom';
+import {useParams, useNavigate} from 'react-router-dom';
 import {useState, useCallback, useEffect} from 'react';
 import {useGetFlashcardById} from "../hooks/UseFlashcardFetch.ts";
 import {CardFlipper} from "./CardFlipper";
@@ -8,6 +8,7 @@ import {KeyboardButtons} from "../Constants/KeyboardButtons.ts";
 export const FlashcardSet = () => {
     const {id} = useParams<{ id: string }>();
     const {data, loading, error} = useGetFlashcardById(id || '');
+    const navigate = useNavigate();
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [flipped, setFlipped] = useState(false);
@@ -60,6 +61,14 @@ export const FlashcardSet = () => {
                 <>
                     <Typography variant="h4" gutterBottom>{data.name}</Typography>
                     <Typography>{currentIndex + 1} / {cardsLength}</Typography>
+
+                    <Box display="flex" gap={2} mt={2}>
+                        {/* Заглушки */}
+                        <Button variant="outlined" onClick={() => {}}>Learn</Button>
+                        <Button variant="outlined" onClick={() => {}}>Test</Button>
+                        {/* Edit */}
+                        <Button variant="contained" color="primary" onClick={() => navigate(`/flashcard-set/${id}/edit`, { state: { data } })}>Edit</Button>
+                    </Box>
 
                     <Box>
                         <CardFlipper

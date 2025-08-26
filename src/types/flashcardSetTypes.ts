@@ -1,14 +1,14 @@
-export type flashcardSet = {
-    id: number;
-    name: string;
-    cards?: { term: string; definition: string; id: number }[];
+export type Card = {
+    term: string;
+    definition: string;
 };
 
-export type NewFlashcardSet = {
-    userId?: number
+export type FlashcardSet = {
+    id?: number;         // optional, если создаем новый
+    userId?: number;     // optional, если нужно привязать пользователя
     name: string;
     description: string;
-    cards: { term: string; definition: string }[];
+    cards: Card[];
 };
 
 export interface LastSeenFlashcardSetDto {
@@ -16,8 +16,3 @@ export interface LastSeenFlashcardSetDto {
     flashcardSetName: string;
     openedAt: string;
 }
-
-export type Card = {
-    term: string;
-    definition: string;
-};

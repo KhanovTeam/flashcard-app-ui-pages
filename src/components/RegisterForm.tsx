@@ -11,8 +11,6 @@ import {login, register} from "../api/authentication.ts";
  *
  * Выполняет создание пользователя, авторизацию, сохранение токена и информации о пользователе.
  * Обрабатывает ошибки регистрации и входа.
- *
- * @param onSuccess Функция, вызываемая при успешной регистрации и авторизации.
  */
 export const RegisterForm = () => {
     const navigate = useNavigate();
@@ -20,6 +18,7 @@ export const RegisterForm = () => {
         name: '',
         surname: '',
         login: '',
+        email: '',
         password: '',
     });
 
@@ -103,6 +102,16 @@ export const RegisterForm = () => {
                     required
                     fullWidth
                     error={isFieldEmpty('login')}
+                />
+                <TextField
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    fullWidth
+                    error={isFieldEmpty('email')}
                 />
                 <TextField
                     label="Пароль"

@@ -1,60 +1,53 @@
 import {useState} from 'react';
 import {useAuth} from '../hooks/UseAuth';
-import {useNavigate} from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import {Box, Button, Container, IconButton, TextField, Typography} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {Card, NewFlashcardSet} from '../types/flashcardSetTypes';
-import {createUser} from "../api/user.ts";
+import type {Card, FlashcardSet} from '../types/flashcardSetTypes';
+import {createFlashcardSet, updateFlashcardSet} from "../api/flashcardSet.ts";
 
-
-/**
- * Компонент формы для создания нового набора карточек.
- *
- * Позволяет ввести название, описание и добавить/удалить карточки.
- * Загружает текущего пользователя для присвоения набора.
- * Выполняет валидацию и отправляет данные на сервер.
- *
- * @returns JSX элемент с формой создания набора карточек.
- */
 export const FlashcardSetForm = () => {
     const {user} = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const propData = location.state?.data;
+    const isEditMode = !!propData; // режим редактирования
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [flashcardSet, setFlashcardSet] = useState<NewFlashcardSet>({
-        name: '',
-        description: '',
-        cards: [
-            {term: '', definition: ''},
-            {term: '', definition: ''}
-        ],
-        userId: user?.id // This will be set properly in handleSubmit
+    const [flashcardSet, setFlashcardSet] = useState<FlashcardSet>(() => {
+        if (propData) {
+            return {
+                id: propData.id,
+                name: propData.name,
+                description: propData.description,
+                cards: propData.cards?.map((c: Card) => ({
+                    term: c.term,
+                    definition: c.definition
+                })) || [],
+                userId: propData.userId || user?.id
+            };
+        }
+        return {
+            name: '',
+            description: '',
+            cards: [
+                {term: '', definition: ''},
+                {term: '', definition: ''}
+            ],
+            userId: user?.id
+        };
     });
 
-    const navigate = useNavigate();
-
-    /**
-     * Обновляет данные конкретной карточки.
-     *
-     * @param index Индекс карточки в списке.
-     * @param field Поле карточки для обновления ('term' или 'definition').
-     * @param value Новое значение для поля.
-     */
     const handleCardChange = (index: number, field: keyof Card, value: string) => {
         const newCards = [...flashcardSet.cards];
         newCards[index][field] = value;
         setFlashcardSet({...flashcardSet, cards: newCards});
     };
 
-    /** Добавляет пустую карточку в список */
     const addCard = () => {
         setFlashcardSet({...flashcardSet, cards: [...flashcardSet.cards, {term: '', definition: ''}]});
     };
 
-    /**
-     * Удаляет карточку по индексу.
-     *
-     * @param index Индекс карточки, которую нужно удалить.
-     */
     const deleteCard = (index: number) => {
         setFlashcardSet({...flashcardSet, cards: flashcardSet.cards.filter((_, i) => i !== index)});
     };
@@ -68,18 +61,21 @@ export const FlashcardSetForm = () => {
             return;
         }
 
-        if (!flashcardSet.name || !flashcardSet.description || !flashcardSet.cards
-            .every(card => card.term && card.definition)) {
+        if (!flashcardSet.name || !flashcardSet.description || !flashcardSet.cards.every(card => card.term && card.definition)) {
             setError('Пожалуйста, заполните все обязательные поля.');
             return;
         }
 
         setIsSubmitting(true);
         try {
-            await createUser(flashcardSet);
+            if (isEditMode && flashcardSet.id) {
+                await updateFlashcardSet(flashcardSet);
+            } else {
+                await createFlashcardSet(flashcardSet);
+            }
             navigate('/');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Произошла ошибка при создании набора');
+            setError(err instanceof Error ? err.message : 'Произошла ошибка при сохранении набора');
         } finally {
             setIsSubmitting(false);
         }
@@ -88,11 +84,11 @@ export const FlashcardSetForm = () => {
     return (
         <Container maxWidth="sm">
             <Typography variant="h4" gutterBottom>
-                Создать новый набор карточек
+                {isEditMode ? 'Редактировать набор карточек' : 'Создать новый набор карточек'}
             </Typography>
             <Box component="form" onSubmit={handleSubmit} noValidate>
                 {error && (
-                    <Typography color="error" sx={{ mb: 2 }}>
+                    <Typography color="error" sx={{mb: 2}}>
                         {error}
                     </Typography>
                 )}
@@ -107,7 +103,7 @@ export const FlashcardSetForm = () => {
                 <TextField
                     label="Описание"
                     value={flashcardSet.description}
-                    onChange={e => setFlashcardSet({ ...flashcardSet, description: e.target.value})}
+                    onChange={e => setFlashcardSet({...flashcardSet, description: e.target.value})}
                     fullWidth
                     multiline
                     rows={3}
@@ -147,7 +143,7 @@ export const FlashcardSetForm = () => {
                     fullWidth
                     disabled={isSubmitting}
                 >
-                    {isSubmitting ? 'Создание...' : 'Создать набор'}
+                    {isSubmitting ? 'Сохранение...' : isEditMode ? 'Сохранить изменения' : 'Создать набор'}
                 </Button>
             </Box>
         </Container>
