@@ -2,7 +2,6 @@ import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import {AuthProvider} from './components/AuthProvider';
 import {LoginPage} from './components/LoginPage';
 import {Home} from './components/Home';
-import {PrivateRoute} from './components/PrivateRoute';
 import {RegisterPage} from './components/RegisterPage';
 import {Library} from './components/Library';
 import {Layout} from './components/Layout';
@@ -17,11 +16,11 @@ function App() {
                     <Route path="/login" element={<LoginPage/>}/>
                     <Route path="/register" element={<RegisterPage/>}/>
                     <Route element={<Layout/>}>
-                        <Route path="/" element={<PrivateRoute><Home/></PrivateRoute>}/>
-                        <Route path="/library" element={<PrivateRoute><Library/></PrivateRoute>}/>
-                        <Route path="/add-flashcard-set" element={<PrivateRoute><FlashcardSetForm/></PrivateRoute>}/>
-                        <Route path="/flashcard-set/:id" element={<PrivateRoute><FlashcardSet/></PrivateRoute>}/>
-                        <Route path="/flashcard-set/:id/edit" element={<PrivateRoute><FlashcardSetForm/></PrivateRoute>} />
+                        <Route path="/" element={<Home/>}/>
+                        <Route path="/library" element={<Library/>}/>
+                        <Route path="/add-flashcard-set" element={<FlashcardSetForm/>}/>
+                        <Route path="/flashcard-set/:id" element={<FlashcardSet/>}/>
+                        <Route path="/flashcard-set/:id/edit" element={<FlashcardSetForm/>}/>
                     </Route>
                 </Routes>
             </BrowserRouter>

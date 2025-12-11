@@ -8,6 +8,7 @@ import {useState} from 'react';
 import {appBarSx, toolbarSx, drawerSx, drawerToolbarSx, listItemButtonSx, listItemIconSx, listItemTextSx, mainContentSx,} from './Layout.style';
 import HomeIcon from '@mui/icons-material/Home';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import {PrivateRoute} from "./PrivateRoute.tsx";
 
 /**
  * Основной макет.
@@ -79,7 +80,7 @@ export const Layout = () => {
 
             {/* Main Content */}
             <Box component="main" sx={mainContentSx}>
-                <Outlet/>
+                <PrivateRoute><Outlet/></PrivateRoute>
             </Box>
         </Box>
     );
