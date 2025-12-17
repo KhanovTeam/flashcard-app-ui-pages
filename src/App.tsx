@@ -7,6 +7,7 @@ import {Library} from './components/Library';
 import {Layout} from './components/Layout';
 import {FlashcardSetForm} from './components/FlashcardSetForm';
 import {FlashcardSet} from './components/FlashcardSet';
+import {MultipleChoice} from "./components/MultipleChoice.tsx";
 
 function App() {
     return (
@@ -21,6 +22,7 @@ function App() {
                         <Route path="/add-flashcard-set" element={<FlashcardSetForm/>}/>
                         <Route path="/flashcard-set/:id" element={<FlashcardSet/>}/>
                         <Route path="/flashcard-set/:id/edit" element={<FlashcardSetForm/>}/>
+                        <Route path="/flashcard-set/:id/learn" element={<MultipleChoice />} />
                     </Route>
                 </Routes>
             </BrowserRouter>

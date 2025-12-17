@@ -86,7 +86,7 @@ export const FlashcardSet = () => {
                     <Typography>{currentIndex + 1} / {cardsLength}</Typography>
 
                     <Box display="flex" gap={2} mt={2}>
-                        <Button variant="outlined" onClick={() => {}}>Learn</Button>
+                        <Button variant="outlined" onClick={() => navigate(`/flashcard-set/${id}/learn`)}>Multiple Choice</Button>
                         <Button variant="outlined" onClick={() => {}}>Test</Button>
                         <Button variant="contained" color="primary" onClick={() =>
                             navigate(`/flashcard-set/${id}/edit`, { state: { data } })}>Edit</Button>
