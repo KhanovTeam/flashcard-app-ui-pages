@@ -7,6 +7,7 @@ import {KeyboardButtons} from "../Constants/KeyboardButtons.ts";
 import {deleteFlashcardSet} from "../api/flashcardSet.ts";
 import {speakText} from "../services/textToSpeech";
 import {getTermVoice, getDefVoice} from "../utils/voiceCookies";
+import {getFlashcardMode, setFlashcardMode} from "../utils/flashcardModeCookie";
 
 export const FlashcardSet = () => {
     const {id} = useParams<{ id: string }>();
@@ -17,23 +18,39 @@ export const FlashcardSet = () => {
     const [flipped, setFlipped] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [isDeleting] = useState(false);
-
+    const [mode, setMode] = useState<'term' | 'definition'>('term');
     const cardsLength = data?.cards?.length || 0;
     const currentCard = data?.cards?.[currentIndex];
 
+    useEffect(() => {
+        if (!id) return;
+        setMode(getFlashcardMode(id));
+    }, [id]);
+
+    useEffect(() => {
+        setFlipped(mode === 'definition');
+    }, [mode]);
+
     const goNext = useCallback(() => {
         if (!cardsLength) return;
-        setFlipped(false);
+        setFlipped(mode === 'definition');
         setCurrentIndex((prev) => (prev + 1) % cardsLength);
-    }, [cardsLength]);
+    }, [cardsLength, mode]);
 
     const goPrev = useCallback(() => {
         if (!cardsLength) return;
-        setFlipped(false);
+        setFlipped(mode === 'definition');
         setCurrentIndex((prev) => (prev === 0 ? cardsLength - 1 : prev - 1));
-    }, [cardsLength]);
+    }, [cardsLength, mode]);
 
     const toggleFlip = useCallback(() => setFlipped((prev) => !prev), []);
+
+    const toggleMode = () => {
+        if (!id) return;
+        const newMode = mode === 'term' ? 'definition' : 'term';
+        setMode(newMode);
+        setFlashcardMode(id, newMode);
+    };
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -56,7 +73,6 @@ export const FlashcardSet = () => {
     useEffect(() => {
         if (!currentCard || !id) return;
 
-        // только если включён voice для набора
         if (!flipped && getTermVoice(id)) {
             speakText(currentCard.term);
         }
@@ -109,8 +125,9 @@ export const FlashcardSet = () => {
                     <Box display="flex" gap={2} mt={2}>
                         <Button variant="outlined" onClick={goPrev}>Предыдущая</Button>
                         <Button variant="outlined" onClick={goNext}>Следующая</Button>
+                        <Button variant="outlined" onClick={toggleMode}>{mode === 'term' ? 'to Def' : 'to Term'}</Button>
                         <Button variant="contained" color="secondary" onClick={() =>
-                                speakText(flipped ? currentCard.definition : currentCard.term)}>🔊 Voice</Button>
+                            speakText(flipped ? currentCard.definition : currentCard.term)}>🔊 Voice</Button>
                     </Box>
 
                     <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
