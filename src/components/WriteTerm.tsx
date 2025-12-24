@@ -30,7 +30,7 @@ export const WriteTerm = () => {
         setUserAnswer("");
         setHintCount(0);
         focusInput();
-    }, [index]);
+    }, [index, currentCard]);
 
     // Проверка ответа
     const handleAnswerSubmit = () => {
