@@ -13,16 +13,15 @@ export const FlashcardSet = () => {
     const {id} = useParams<{ id: string }>();
     const {data, loading, error} = useGetFlashcardById(id || '');
     const navigate = useNavigate();
-    const [currentIndex] = useState(0);
     const [flipped, setFlipped] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [isDeleting] = useState(false);
     const [mode, setMode] = useState<'term' | 'definition'>('term');
-    const cardsLength = data?.cards?.length || 0;
-    const currentCard = data?.cards?.[currentIndex];
     const [animating, setAnimating] = useState(false);
     const [slideDirection, setSlideDirection] = useState<'next' | 'prev' | null>(null);
     const [displayedIndex, setDisplayedIndex] = useState(0);
+    const cardsLength = data?.cards?.length || 0;
+    const currentCard = data?.cards?.[displayedIndex];
 
     useEffect(() => {
         if (!id) return;
@@ -110,7 +109,7 @@ export const FlashcardSet = () => {
         if (flipped && getDefVoice(id)) {
             speakText(currentCard.definition);
         }
-    }, [currentCard, flipped, id]);
+    }, [currentCard, flipped, id, displayedIndex]);
 
     const handleDelete = async () => {
         if (!id) return;
@@ -145,8 +144,8 @@ export const FlashcardSet = () => {
 
                     <Box>
                         <CardFlipper
-                            term={data.cards[displayedIndex].term}
-                            definition={data.cards[displayedIndex].definition}
+                            term={currentCard.term}
+                            definition={currentCard.definition}
                             flipped={flipped}
                             onFlip={toggleFlip}
                             // Если карточка перевернута, инвертируем направление
