@@ -6,33 +6,35 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-variables:
-  NODE_VERSION: '20'
+jobs:
+- job: SingleJob
+  displayName: 'Build and Deploy'
+  variables:
+    NODE_VERSION: '20'
+  steps:
+    # 1️⃣ Checkout
+    - checkout: self
 
-steps:
-  # 1️⃣ Checkout
-  - checkout: self
+    # 2️⃣ Node.js
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(NODE_VERSION)
+      displayName: 'Use Node.js $(NODE_VERSION)'
 
-  # 2️⃣ Node.js
-  - task: NodeTool@0
-    inputs:
-      versionSpec: $(NODE_VERSION)
-    displayName: 'Use Node.js $(NODE_VERSION)'
+    # 3️⃣ Install deps
+    - script: |
+        npm ci
+      displayName: 'Install dependencies'
 
-  # 3️⃣ Install deps
-  - script: |
-      npm ci
-    displayName: 'Install dependencies'
+    # 4️⃣ Build Vite app
+    - script: |
+        npm run build
+      displayName: 'Build Vite app'
 
-  # 4️⃣ Build Vite app
-  - script: |
-      npm run build
-    displayName: 'Build Vite app'
-
-  # 5️⃣ Deploy to Azure Static Web Apps
-  - task: AzureStaticWebApp@0
-    displayName: 'Deploy to Azure Static Web App'
-    inputs:
-      azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
-      app_location: '/'
-      output_location: 'dist'
+    # 5️⃣ Deploy to Azure Static Web Apps
+    - task: AzureStaticWebApp@0
+      displayName: 'Deploy to Azure Static Web App'
+      inputs:
+        azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
+        app_location: '/'
+        output_location: 'dist'
